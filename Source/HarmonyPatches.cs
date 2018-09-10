@@ -2,67 +2,31 @@
 using RimWorld;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using UnityEngine;
 using Verse;
 
-namespace RMTS_Code
+namespace MoreTraitSlots
 {
-    public class RMTS : Mod
+    [StaticConstructorOnStartup]
+    class HarmonyPatches
     {
-        public static Settings Settings;
-        public override string SettingsCategory() { return "RMTS.RMTS".Translate(); }
-        public override void DoSettingsWindowContents(Rect canvas) { Settings.DoWindowContents(canvas); }
-        public RMTS(ModContentPack content) : base(content)
+        static HarmonyPatches()
         {
-            Settings = GetSettings<Settings>();
-            var harmony = HarmonyInstance.Create("rainbeau.rmts");
+            var harmony = HarmonyInstance.Create("com.rimworld.mod.moretraitslots");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
+
+            Log.Message(
+                "MoreTraitSlots Harmony Patches:" + Environment.NewLine +
+                "  Prefix:" + Environment.NewLine +
+                "    PawnGenerator.GenerateTraits [HarmonyPriority(Priority.VeryHigh)]" + Environment.NewLine +
+                "    CharacterCardUtility.DrawCharacterCard [HarmonyPriority(Priority.VeryHigh)]");
         }
     }
-
-    public class Settings : ModSettings
-    {
-        public float traitsMin = 2f;
-        public float traitsMax = 3f;
-        public bool smallFont = false;
-        public void DoWindowContents(Rect canvas)
-        {
-            Listing_Standard list = new Listing_Standard();
-            list.ColumnWidth = canvas.width;
-            list.Begin(canvas);
-            list.Gap();
-            list.Label("RMTS.traitsMin".Translate());
-            traitsMin = list.Slider(traitsMin, 0, 8.25f);
-            Text.Font = GameFont.Tiny;
-            list.Label("          " + (int)traitsMin);
-            Text.Font = GameFont.Small;
-            list.Gap();
-            list.Label("RMTS.traitsMax".Translate());
-            traitsMax = list.Slider(traitsMax, 0, 8.25f);
-            Text.Font = GameFont.Tiny;
-            list.Label("          " + (int)traitsMax);
-            Text.Font = GameFont.Small;
-            list.Gap(48);
-            list.Label("RMTS.traitsNotes".Translate());
-            list.End();
-
-            if (traitsMin > traitsMax)
-                traitsMax = traitsMin;
-        }
-        public override void ExposeData()
-        {
-            base.ExposeData();
-            Scribe_Values.Look(ref traitsMin, "traitsMin", 2f);
-            if (traitsMax < traitsMin) { traitsMax = traitsMin; }
-            Scribe_Values.Look(ref traitsMax, "traitsMax", 3f);
-        }
-    }
-
+    
     [HarmonyPatch(typeof(PawnGenerator), "GenerateTraits", null)]
-    public static class PawnGenerator_GenerateTraits
+    static class PawnGenerator_GenerateTraits
     {
         [HarmonyPriority(Priority.VeryHigh)]
         static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
@@ -112,49 +76,79 @@ namespace RMTS_Code
     }
     
     [HarmonyPatch(typeof(CharacterCardUtility), "DrawCharacterCard", new Type[] { typeof(Rect), typeof(Pawn), typeof(Action), typeof(Rect) })]
-    public static class CharacterCardUtility_DrawCharacterCard
+    static class CharacterCardUtility_DrawCharacterCard
     {
         [HarmonyPriority(Priority.VeryHigh)]
         static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            MethodInfo HighlightOpportunity = AccessTools.Method(typeof(UIHighlighter), "HighlightOpportunity");
             MethodInfo SetTextSize = AccessTools.Method(typeof(CharacterCardUtility_DrawCharacterCard), nameof(SetTextSize));
-            MethodInfo SetRectSize = AccessTools.Method(typeof(CharacterCardUtility_DrawCharacterCard), nameof(SetRectSize));
-            bool traits = false;
-            foreach (CodeInstruction i in instructions)
+            List<CodeInstruction> l = new List<CodeInstruction>(instructions);
+            for (int i = 0; i < l.Count; ++i)
             {
-                if (i.opcode == OpCodes.Ldstr && i.operand.Equals("Traits"))
+                if (l[i].opcode == OpCodes.Ldstr && l[i].operand.Equals("Traits"))
                 {
-                    traits = true;
+                    for (int j = i; j >= i - 20; --j)
+                    {
+                        if (l[j].opcode == OpCodes.Ldc_R4)
+                        {
+                            float temp;
+                            if (float.TryParse(l[j].operand.ToString(), out temp))
+                            {
+                                if (temp == 100f)
+                                {
+                                    // Move "Traits" up 60 pixels
+                                    l[j].operand = 80f;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    for (int j = i; i >= i - 20; --j)
+                    {
+                        if (l[j].opcode == OpCodes.Ldc_I4_2)
+                        {
+                            // Make Traits font small
+                            l[j].opcode = OpCodes.Ldc_I4_1;
+                            break;
+                        }
+                    }
+
+                    bool first0 = false,
+                         first30 = false,
+                         first24 = false;
+                    for (; i < l.Count; ++i)
+                    {
+                        if (l[i].opcode == OpCodes.Ldc_R4 && l[i].operand != null)
+                        {
+                            float f;
+                            if (float.TryParse(l[i].operand.ToString(), out f))
+                            {
+                                if (!first30 && f == 30f)
+                                {
+                                    //first30 = true;
+                                    l[i].operand = 24f;
+                                }
+                                else if (!first24 && f == 24f)
+                                {
+                                    first24 = true;
+                                    l[i].operand = 16f;
+                                    break;
+                                }
+                            }
+                        }
+                        else if (!first0 && l[i].opcode == OpCodes.Ldc_I4_1)
+                        {
+                            first0 = true;
+                            // Make each trait's label font tiny
+                            l[i].opcode = OpCodes.Ldc_I4_0;
+                        }
+                    }
+                    // Exit loop
+                    i = int.MaxValue - 1;
                 }
-                if (traits && i.opcode == OpCodes.Ldc_I4_1)
-                {
-                    yield return new CodeInstruction(OpCodes.Call, SetTextSize);//replaces instruction, gets 0 or 1 returned from the method, depending on setting
-                    continue;
-                }
-                if (traits && i.opcode == OpCodes.Ldc_R4 && i.operand.Equals(24f))//replaces rect height
-                {
-                    yield return new CodeInstruction(OpCodes.Call, SetRectSize);
-                    continue;
-                }
-                if (traits && i.opcode == OpCodes.Ldc_R4 && i.operand.Equals(2f))//replaces rect y calculation
-                {
-                    yield return new CodeInstruction(OpCodes.Ldc_R4, 0f);
-                    traits = false;
-                    continue;
-                }
-                yield return i;
             }
-        }
-
-        public static GameFont SetTextSize()
-        {
-            return (RMTS.Settings.traitsMax < 6) ? GameFont.Small : GameFont.Tiny;
-        }
-
-        public static float SetRectSize()
-        {
-            return 24f;
+            return l;
         }
     }
 }
