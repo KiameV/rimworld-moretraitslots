@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ModMetaData>
 
-	<name>More Trait Slots - B19</name>
+	<name>[KV] More Trait Slots - 1.0</name>
 	<author>Rainbeau Flambe (original) &amp; Kiame Vivacity</author>
 	<url>https://ludeon.com/forums/index.php?topic=45488.msg432745</url>
-	<targetVersion>0.19.0</targetVersion>
+	<targetVersion>1.0.0</targetVersion>
 	<description>
 "More Trait Slots" is a pretty simple mod. It doesn't add new traits to the game, but it will work well with mods that do, as it allows you to configure the minimum and maximum number of traits that pawns will start with. It also adjusts the character display tab so that up to seven (or up to nine with a smaller font) traits can actually be seen.
 
@@ -26,6 +26,7 @@ Translators:
 - Maculator - German
 - Proxyer - Japanese
 - 53N4 - Spanish
+- fodnjs0811 - Korean
 
 The mod utilizes Pardeike's "Harmony Patch Library." (No additional download is required, as the library is included with the mod.)
 
