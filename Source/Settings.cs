@@ -32,7 +32,10 @@ namespace MoreTraitSlots
             Text.Font = GameFont.Small;
             list.Gap();
             list.Label("RMTS.traitsMax".Translate());
+            float orig = traitsMax;
             traitsMax = list.Slider(traitsMax, 0, 8.25f);
+            if (traitsMax < traitsMin)
+                traitsMin = traitsMax;
             Text.Font = GameFont.Tiny;
             list.Label("          " + (int)traitsMax);
             Text.Font = GameFont.Small;
@@ -41,14 +44,17 @@ namespace MoreTraitSlots
             list.End();
 
             if (traitsMin > traitsMax)
-                traitsMax = traitsMin;
+                traitsMin = traitsMax;
         }
 
         public override void ExposeData()
         {
             base.ExposeData();
             Scribe_Values.Look(ref traitsMin, "traitsMin", 2f);
-            if (traitsMax < traitsMin) { traitsMax = traitsMin; }
+            if (traitsMax < traitsMin)
+            {
+                traitsMax = traitsMin;
+            }
             Scribe_Values.Look(ref traitsMax, "traitsMax", 3f);
         }
     }

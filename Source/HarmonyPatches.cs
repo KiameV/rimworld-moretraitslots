@@ -33,20 +33,22 @@ namespace MoreTraitSlots
         {
             List<CodeInstruction> l = new List<CodeInstruction>(instructions);
             MethodInfo RangeInclusive = AccessTools.Method(typeof(Rand), "RangeInclusive");
-            
+            MethodInfo mi = AccessTools.Method(typeof(PawnGenerator_GenerateTraits), "GetRandomTraitCount");
+
             for (int i = 0; i < l.Count; ++i)
             {
-                if (i + 2 < l.Count)
+                if (l[i].opcode == OpCodes.Call && l[i].operand == RangeInclusive)
                 {
-                    if (l[i + 2].opcode == OpCodes.Call && l[i + 2].operand == RangeInclusive)
-                    {
-                        l[i].opcode = GetOp((int)RMTS.Settings.traitsMin);
-                        l[i + 1].opcode = GetOp((int)RMTS.Settings.traitsMax);
-                        break;
-                    }
+                    l[i].operand = mi;
+                    break;
                 }
             }
             return l;
+        }
+
+        private static int GetRandomTraitCount(int min, int max)
+        {
+            return Rand.RangeInclusive((int)RMTS.Settings.traitsMin, (int)RMTS.Settings.traitsMax);
         }
 
         private static OpCode GetOp(int v)
