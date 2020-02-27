@@ -1,4 +1,4 @@
-﻿using Harmony;
+﻿using HarmonyLib;
 using RimWorld;
 using System;
 using System.Collections.Generic;
@@ -14,14 +14,14 @@ namespace MoreTraitSlots
     {
         static HarmonyPatches()
         {
-            var harmony = HarmonyInstance.Create("com.rimworld.mod.moretraitslots");
+            var harmony = new Harmony("com.rimworld.mod.moretraitslots");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
 
             Log.Message(
                 "MoreTraitSlots Harmony Patches:" + Environment.NewLine +
                 "  Prefix:" + Environment.NewLine +
-                "    PawnGenerator.GenerateTraits [HarmonyPriority(Priority.VeryHigh)]" + Environment.NewLine +
-                "    CharacterCardUtility.DrawCharacterCard [HarmonyPriority(Priority.VeryHigh)]");
+                "    PawnGenerator.GenerateTraits [HarmonyPriority(Priority.VeryHigh)]"/* + Environment.NewLine +
+                "    CharacterCardUtility.DrawCharacterCard [HarmonyPriority(Priority.VeryHigh)]"*/);
         }
     }
     
@@ -77,7 +77,7 @@ namespace MoreTraitSlots
         }
     }
     
-    [HarmonyPatch(typeof(CharacterCardUtility), "DrawCharacterCard", new Type[] { typeof(Rect), typeof(Pawn), typeof(Action), typeof(Rect) })]
+    /*[HarmonyPatch(typeof(CharacterCardUtility), "DrawCharacterCard", new Type[] { typeof(Rect), typeof(Pawn), typeof(Action), typeof(Rect) })]
     static class CharacterCardUtility_DrawCharacterCard
     {
         [HarmonyPriority(Priority.VeryHigh)]
@@ -152,5 +152,5 @@ namespace MoreTraitSlots
             }
             return l;
         }
-    }
+    }*/
 }
