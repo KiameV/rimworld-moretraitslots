@@ -17,14 +17,15 @@ namespace MoreTraitSlots
             var harmony = new Harmony("com.rimworld.mod.moretraitslots");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
 
-            Log.Message(
-                "MoreTraitSlots Harmony Patches:" + Environment.NewLine +
-                "  Prefix:" + Environment.NewLine +
-                "    PawnGenerator.GenerateTraits [HarmonyPriority(Priority.VeryHigh)]"/* + Environment.NewLine +
-                "    CharacterCardUtility.DrawCharacterCard [HarmonyPriority(Priority.VeryHigh)]"*/);
+            //Log.Message(
+            //    "MoreTraitSlots Harmony Patches:" + Environment.NewLine +
+            //    "  Prefix:" + Environment.NewLine +
+            //    "    PawnGenerator.GenerateTraits [HarmonyPriority(Priority.VeryHigh)]"/* + Environment.NewLine +
+            //    "    CharacterCardUtility.DrawCharacterCard [HarmonyPriority(Priority.VeryHigh)]"*/);
         }
     }
     
+    [HarmonyPriority(Priority.First)]
     [HarmonyPatch(typeof(PawnGenerator), "GenerateTraits", null)]
     static class PawnGenerator_GenerateTraits
     {
